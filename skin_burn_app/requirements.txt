@@ -1,0 +1,11 @@
+flask
+werkzeug
+pillow
+numpy
+tensorflow
+keras
+lime
+scikit-image
+matplotlib
+opencv-python
+reportlab

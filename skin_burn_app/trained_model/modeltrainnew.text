@@ -1,0 +1,258 @@
+Google colab link: https://colab.research.google.com/drive/1k66FGKrXmJCXqgiLEWTehiDZhqvZuAoY?usp=sharing
+
+
+from google.colab import drive
+drive.mount('/content/drive')
+
+import tensorflow as tf
+from tensorflow.keras.applications import VGG16, InceptionV3
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import (
+    Input, Dense, Dropout, Flatten, Conv2D, MaxPooling2D,
+    GlobalAveragePooling2D, Concatenate, BatchNormalization, Add, Activation, AveragePooling2D
+)
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping, LearningRateScheduler
+import os
+import numpy as np
+
+
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, roc_curve, auc
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import label_binarize
+
+# Data paths
+data_path_train = '/content/drive/MyDrive/FYPData/train'
+data_path_test = '/content/drive/MyDrive/FYPData/test'
+
+# Reproducibility
+np.random.seed(42)
+tf.random.set_seed(42)
+
+
+# Image parameters and batch size
+img_height, img_width = 224, 224
+batch_size = 32
+
+# Data augmentation (more aggressive)
+datagen_train = ImageDataGenerator(
+    rescale=1.0 / 255.0,
+    rotation_range=45,
+    width_shift_range=0.3,
+    height_shift_range=0.3,
+    shear_range=0.3,
+    zoom_range=0.4,
+    brightness_range=[0.6, 1.4],
+    horizontal_flip=True,
+    vertical_flip=True,
+    fill_mode='nearest'
+)
+datagen_val = ImageDataGenerator(rescale=1.0 / 255.0) #only rescale for validation
+
+
+train_generator = datagen_train.flow_from_directory(
+    data_path_train,
+    target_size=(img_height, img_width),
+    batch_size=batch_size,
+    class_mode='categorical',
+    shuffle=True
+)
+
+
+val_generator = datagen_val.flow_from_directory(
+    data_path_test,
+    target_size=(img_height, img_width),
+    batch_size=batch_size,
+    class_mode='categorical',
+    shuffle=False
+)
+
+# Residual CNN
+def residual_block(x, filters, stride=1):
+    shortcut = x
+    x = Conv2D(filters, (3, 3), strides=stride, padding='same')(x)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    x = Conv2D(filters, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    if stride != 1 or shortcut.shape[-1] != filters:
+        shortcut = Conv2D(filters, (1, 1), strides=stride, padding='same')(shortcut)
+        shortcut = BatchNormalization()(shortcut)
+    x = Add()([x, shortcut])
+    x = Activation('relu')(x)
+    return x
+
+
+
+
+# Model input
+input_shape = (img_height, img_width, 3)
+cnn_input = Input(shape=input_shape)
+
+
+
+
+# Residual CNN layers
+x = Conv2D(64, (7, 7), strides=2, padding='same')(cnn_input)
+x = BatchNormalization()(x)
+x = Activation('relu')(x)
+x = MaxPooling2D((3, 3), strides=2)(x)
+x = residual_block(x, 64)
+x = residual_block(x, 128, stride=2)
+x = residual_block(x, 256, stride=2)
+x = GlobalAveragePooling2D()(x)
+cnn_output = Dense(256, activation='relu')(x)
+
+# Feature Extractors (fine-tune more layers)
+vgg16 = VGG16(weights='imagenet', include_top=False, input_shape=input_shape)
+inception = InceptionV3(weights='imagenet', include_top=False, input_shape=input_shape)
+
+
+
+
+for layer in vgg16.layers[:-15]: #fine tuning more layers
+    layer.trainable = False
+for layer in inception.layers[:-30]: #fine tuning more layers
+    layer.trainable = False
+
+
+
+
+vgg16_output = vgg16(cnn_input)
+vgg16_output = GlobalAveragePooling2D()(vgg16_output)
+
+
+
+
+inception_output = inception(cnn_input)
+inception_output = GlobalAveragePooling2D()(inception_output)
+
+# Combine outputs
+merged = Concatenate()([cnn_output, vgg16_output, inception_output])
+
+
+# Add final dense layers
+merged = Dense(256, activation='relu')(merged)
+merged = BatchNormalization()(merged)
+merged = Dropout(0.5)(merged)
+output = Dense(3, activation='softmax')(merged)
+
+
+# Create the hybrid model
+hybrid_model = Model(inputs=cnn_input, outputs=output)
+
+
+# Compile the hybrid model
+hybrid_model.compile(
+    optimizer=Adam(learning_rate=0.0001),
+    loss='categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+
+# Summary of the hybrid model
+hybrid_model.summary()
+
+# Train the model
+epochs = 60
+history = hybrid_model.fit(
+    train_generator,
+    epochs=epochs,
+    validation_data=val_generator
+)
+
+# Evaluate the model
+final_val_loss, final_val_accuracy = hybrid_model.evaluate(val_generator)
+print(f"Final Validation Accuracy: {final_val_accuracy * 100:.2f}%")
+print(f"Final Validation Loss: {final_val_loss:.4f}")
+
+# Get predictions and true labels
+Y_pred = hybrid_model.predict(val_generator)
+y_pred = np.argmax(Y_pred, axis=1)
+y_true = val_generator.classes
+class_labels = list(val_generator.class_indices.keys())
+
+
+# Classification report
+print("\nClassification Report:")
+print(classification_report(y_true, y_pred, target_names=class_labels))
+
+# Confusion matrix
+cm = confusion_matrix(y_true, y_pred)
+plt.figure(figsize=(6, 5))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_labels, yticklabels=class_labels)
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+plt.show()
+
+# ROC and AUC
+# Binarize the labels for ROC computation
+y_true_bin = label_binarize(y_true, classes=[i for i in range(len(class_labels))])
+
+
+fpr = dict()
+tpr = dict()
+roc_auc = dict()
+
+
+for i in range(len(class_labels)):
+    fpr[i], tpr[i], _ = roc_curve(y_true_bin[:, i], Y_pred[:, i])
+    roc_auc[i] = auc(fpr[i], tpr[i])
+
+
+# Plot all ROC curves
+plt.figure(figsize=(8, 6))
+for i in range(len(class_labels)):
+    plt.plot(fpr[i], tpr[i], label=f'Class {class_labels[i]} (AUC = {roc_auc[i]:.2f})')
+
+
+plt.plot([0, 1], [0, 1], 'k--', label='Random chance')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve (Multiclass)')
+plt.legend(loc='lower right')
+plt.grid()
+plt.show()
+
+#can also manually calculate average precision, recall, F1-score if needed
+from sklearn.metrics import precision_score, recall_score, f1_score
+
+
+precision = precision_score(y_true, y_pred, average='macro')
+recall = recall_score(y_true, y_pred, average='macro')
+f1 = f1_score(y_true, y_pred, average='macro')
+
+
+print(f"Macro Precision: {precision:.4f}")
+print(f"Macro Recall: {recall:.4f}")
+print(f"Macro F1 Score: {f1:.4f}")
+
+import json
+# Create a mapping from class indices to class names
+class_indices = {str(v): k for k, v in train_generator.class_indices.items()}
+
+
+# Save the class indices as a JSON file
+class_indices_path = 'class_indices.json'
+with open(class_indices_path, 'w') as json_file:
+    json.dump(class_indices, json_file)
+print(f"Class indices saved to {class_indices_path}")
+
+
+# Load the class indices from the JSON file
+with open(class_indices_path, 'r') as json_file:
+    loaded_class_indices = json.load(json_file)
+print("Class indices loaded successfully:", loaded_class_indices)
+
+# Save the model
+model_save_path = '/content/drive/My Drive/FYPData/nolime.h5'
+hybrid_model.save(model_save_path)
+print(f"Model saved at {model_save_path}.")
+
+
+
+
+

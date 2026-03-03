@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Burn Classification System - Introduction</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='logo (2).png') }}" alt="Burn Classification System Logo">
+                NovaBurn ai
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}">Introduction</a></li>
+                <li><a href="{{ url_for('classify') }}">Classification</a></li>
+                <li><a href="{{ url_for('heatmap') }}">Heatmap</a></li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container mt">
+        <h1>Burn Classification System</h1>
+        <p>Welcome to the NovaBurn ai - Skin Burn Classification System. This tool helps to assess the severity of skin burns using image analysis.</p>
+        <p>NovaBurn ai will classify the burns into the 3 burn degrees. Also it provides a heatmap of the burn to make better decisions.</p>
+        <a href="{{ url_for('classify') }}" class="button">Try Classification Tool →</a>
+        <img src="{{ url_for('static', filename='burns22.webp') }}" style="width: 300px;height: 300px;padding-right: 200px; padding-left: 200px; padding-top:30px;" alt="Upload Icon">
+        
+        
+        
+    </div>
+    <div class="container mt">
+        <h2>First Degree Burns / Superficial Burns</h2>
+        <p>First-degree burns affect only the outer layer of skin (epidermis). They cause redness, pain, and minor swelling but don't usually cause blistering.</p>
+        <p class="sub-headers"><b>Symptoms:</b></p>
+        <ul class="symptoms-list">
+            <li>Redness</li>
+            <li>Pain</li>
+            <li>Minor Swelling</li>
+            <li>Skin Dryness</li>
+            <li>Peeling as the burn heals</li>
+        </ul>
+        <p class="sub-headers"><b>Treatment:</b></p>
+        <ul class="treatment-list">
+            <li>Cool the burn with cool (not cold) <br> running water for 10-15 minutes</li>
+            <li>Apply aloe vera or moisturizer</li>
+            <li>Take over-the-counter pain relievers if needed</li>
+            <li>Protect the area with a sterile, non-adhesive bandage</li>
+        </ul>
+    </div>
+    <div class="container mt">
+        <h2>Second Degree Burns / Partial Thickness Burns</h2>
+        <p>Second-degree burns affect both the epidermis and dermis layers of skin. They cause blisters, severe pain, and swelling.</p>
+        <p class="sub-headers"><b>Symptoms:</b></p>
+        <ul class="symptoms-list">
+            <li>Blisters</li>
+            <li>Severe pain and swelling</li>
+            <li>Red, white or splotchy skin</li>
+            <li>Wet appearance due to fluid leaking</li>
+            <li>Possible scarring</li>
+        </ul>
+        <p class="sub-headers"><b>Treatment:</b></p>
+        <ul class="treatment-list">
+            <li>Run cool water over the area for 15 minutes</li>
+            <li>Do not break blisters</li>
+            <li>Apply antibiotic ointment</li>
+            <li>Cover with a sterile, non-stick bandage</li>
+            <li>Seek medical attention for large or severe burns</li>
+        </ul>
+    </div>
+    <div class="container mt">
+        <h2>Third Degree Burns / Full Thickness Burns</h2>
+        <p>Third-degree burns extend through all layers of skin and may affect deeper tissues. They appear white or charred and may not be painful due to nerve damage.</p>
+        <p class="sub-headers"><b>Symptoms:</b></p>
+        <ul class="symptoms-list">
+            <li>White, brown, or black skin</li>
+            <li>Charred appearance</li>
+            <li>Leathery texture</li>
+            <li>Numbness due to nerve damage</li>
+            <li>Severe scarring</li>
+        </ul>
+        <p class="sub-headers"><b>Treatment:</b></p>
+        <ul class="treatment-list">
+            <li>Call emergency services immediately</li>
+            <li>Do not remove burned clothing</li>
+            <li>Cover the area with a clean, dry cloth</li>
+            <li>Elevate the burned area above heart level if possible</li>
+            <li>Monitor for signs of shock</li>
+        </ul>
+    </div>
+</body>
+</html>

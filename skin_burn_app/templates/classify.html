@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Burn Classification System - Classification</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='logo (2).png') }}" alt="Burn Classification System Logo">
+                NovaBurn ai
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}">Introduction</a></li>
+                <li><a href="{{ url_for('classify') }}">Classification</a></li>
+                <li><a href="{{ url_for('heatmap') }}">Heatmap</a></li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>Burn Classification Tool</h1>
+        <p>Upload an image of a burn to receive an assessment of its severity.</p>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="upload-area">
+                <input type="file" name="image" accept="image/*" id="image-upload">
+                <label for="image-upload">
+                    <img src="{{ url_for('static', filename='upload-icon.png') }}" alt="Upload Icon">
+                    <p>Drag and drop an image, or</p>
+                    <p class="browse-text">Browse Files</p>
+                </label>
+                <p class="supported-formats">Supported formats: JPG, JPEG, PNG, GIF</p>
+            </div>
+            <br>
+            <div id="image-preview-container">
+                <img id="image-preview" src="#" alt="Image Preview">
+                <button type="button" id="cancel-preview" class="button">X</button>
+            </div>
+            <button class="button" type="submit" id="classify-button">Classify Burn</button>
+        </form>
+        
+
+        {% if prediction %}
+            <p>Prediction: {{ prediction }}</p>
+            <form action="{{ url_for('generate_heatmap_route') }}" method="POST">
+                <input type="hidden" name="image_path" value="{{ image_path }}">
+                <button type="submit" class="button">Show Heatmap</button>
+            </form>
+        {% endif %}
+    </div>
+
+    <script>
+        const imageUpload = document.getElementById('image-upload');
+        const imagePreview = document.getElementById('image-preview');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const cancelButton = document.getElementById('cancel-preview');
+        const classifyButton = document.getElementById('classify-button');
+
+        imagePreviewContainer.style.display = 'none'; // Initially hide the preview
+
+        imageUpload.addEventListener('change', function() {
+            const file = imageUpload.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.style.display = 'block';
+                    classifyButton.disabled = false; // Enable classify button
+                }
+                reader.readAsDataURL(file);
+            } else {
+                resetPreview();
+            }
+        });
+
+        cancelButton.addEventListener('click', function() {
+            resetPreview();
+        });
+
+        function resetPreview() {
+            imageUpload.value = ''; // Clear the file input
+            imagePreview.src = '#';
+            imagePreviewContainer.style.display = 'none';
+            classifyButton.disabled = true; // Disable classify button
+        }
+
+        // Disable classify button initially
+        classifyButton.disabled = true;
+    </script>
+</body>
+</html>
+
+
+ 

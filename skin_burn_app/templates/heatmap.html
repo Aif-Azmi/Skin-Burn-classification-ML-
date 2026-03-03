@@ -1,0 +1,103 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>Burn Classification System - Heatmap</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='logo (2).png') }}" alt="Burn Classification System Logo">
+                NovaBurn ai
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}">Introduction</a></li>
+                <li><a href="{{ url_for('classify') }}">Classification</a></li>
+                <li><a href="{{ url_for('heatmap') }}">Heatmap</a></li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>LIME Heatmap</h1>
+        {% if heatmap_filename %}
+            <div class="explanation">
+                <p>LIME Explanation Heatmap:</p>
+                <img src="{{ url_for('heatmap_file', filename=heatmap_filename) }}" alt="LIME Heatmap">
+            </div>
+        {% else %}
+            <p>Please upload an image and classify it first to see the heatmap.</p>
+        {% endif %}
+        <a href="{{ url_for('classify') }}" class="button">Back to Classification</a>
+    </div>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Burn Classification System - Heatmaps</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .explanation {
+            margin-bottom: 30px;
+        }
+        .explanation img {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+        }
+        h2 {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='logo (2).png') }}" alt="Logo">
+                NovaBurn ai
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}">Introduction</a></li>
+                <li><a href="{{ url_for('classify') }}">Classification</a></li>
+                <li><a href="{{ url_for('heatmap') }}">Heatmap</a></li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>Model Explainability Heatmaps</h1>
+
+        {% if lime_heatmap_filename %}
+        <div class="explanation">
+            <h2>LIME Heatmap</h2>
+            <img src="{{ url_for('heatmap_file', filename=lime_heatmap_filename) }}" alt="LIME Heatmap">
+        </div>
+        {% endif %}
+
+{% if gradcam_paths %}
+<div class="explanation">
+    <h2>Grad-CAM Heatmaps</h2>
+    <h3>VGG Model</h3>
+    <img src="{{ url_for('heatmap_file', filename=gradcam_paths['vgg']) }}" style="max-width: 300px; height: auto; border-radius: 12px;">
+   
+    <h3>Inception Model</h3>
+    <img src="{{ url_for('heatmap_file', filename=gradcam_paths['inception']) }}" alt="Inception Grad-CAM" style="max-width: 300px; height: auto; border-radius: 12px;">
+   
+    <h3>Residual Model</h3>
+    <img src="{{ url_for('heatmap_file', filename=gradcam_paths['residual']) }}" alt="Residual Grad-CAM" style="max-width: 300px; height: auto; border-radius: 12px;">
+</div>
+{% endif %}
+
+        {% if not lime_heatmap_filename and not gradcam_paths %}
+            <p>No heatmaps available yet. Please upload an image and generate heatmaps.</p>
+        {% endif %}
+        <a href="{{ url_for('download_report') }}" class="button">Download Report</a>
+
+        <a href="{{ url_for('classify') }}" class="button">← Back to Classification</a>
+    </div>
+</body>
+</html>
+
