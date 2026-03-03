@@ -1,0 +1,1 @@
+skin_burn_app/trained_model/latestbestmodel.h5 filter=lfs diff=lfs merge=lfs -text
